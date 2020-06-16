@@ -1,5 +1,7 @@
 import os
 import requests
+import datetime
+
 
 from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, emit
@@ -21,15 +23,14 @@ def after_request(response):
     return response
 
 
-# Store users and channels in lists; store messages in dict where key is username and value is their message
-# could posts be stored as class Post, post.user i post.message?
+# Store users, channels and posts as global variables
 users = []
 channels = ["Dogs", "Cats"]
 posts = []
 
 @app.route("/")
 def index():
-    return render_template("index.html", channels=channels)
+    return render_template("index.html", channels=channels, posts=posts)
 
 @app.route("/<string:channel>")
 def channel(channel):
@@ -58,10 +59,7 @@ def add_channel(data):
 
 @socketio.on("add post")
 def add_post(data):
-    post = Post(channel="", username="", message="", time="")
-    if len(channel.posts) < 100:
-        posts.append(post)
-    else:
-        posts
+    post = Post(channel=data["selection"][0], username=data["selection"][1], message=data["selection"][2], time=datetime.datetime.now())
+    posts.append(post)
     selection = data["selection"]
     emit("display post", {"selection": selection}, broadcast=True)
