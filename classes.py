@@ -5,35 +5,14 @@ class Post:
         self.message = message
         self.time = time
 
-class User:
-
-    def __init__(self, username):
-        self.username = username
-
-        counter = 1
-        # Keep track of id number.
-        self.id = User.counter
-        User.counter += 1
-
-        # Keep track of messages
-        self.posts = []
-
-    def add_post(self, p):
-        self.posts.append(p)
-        self.id = p.post_id
-
 class Channel:
+    counter = 1
     def __init__(self, name):
         self.name = name
 
-        counter = 1
         # Keep track of id number.
         self.id = Channel.counter
         Channel.counter += 1
 
         # Keep track of messages
         self.posts = []
-
-    def add_post(self, p):
-        self.posts.append(p)
-        self.id = p.post_id
