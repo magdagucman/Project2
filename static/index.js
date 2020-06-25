@@ -1,21 +1,92 @@
-// If user submitted the display name before, fetch it from localStorage
+var username;
+var current_channel;
+
+// If user submitted the display name in the past
 if (localStorage.getItem('username')) {
-    var username = localStorage.getItem('username');
+
+  // If user's last channel in local storage
+  if (localStorage.getItem('channel')) {
+
+    // Set username
+    username = localStorage.getItem('username');
+
+    // Set current channel
+    current_channel = localStorage.getItem('channel');
+
+    // Load the DOM
     document.addEventListener('DOMContentLoaded', () => {
 
+        // Set up web socket
         var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
 
+        // Add username div
+        const template = Handlebars.compile(document.querySelector('#handleuser').innerHTML);
+        const content = template({'username': username});
+        document.querySelector('#userdiv').innerHTML += content;
+
+
+        // Load channel page
+        load_page(localStorage.getItem('channel'))
         document.querySelector('#firstpage').remove();
-        document.querySelector('#welcome').innerHTML = `<h1>Hello, ${username}!<br></h1><h2>Choose a channel to start.</h2>`;
+
+        // By default, post button is disabled
+        document.querySelector('.chatbutton').disabled = true;
+
+        // Enable button only if there is text in the input field
+        document.querySelector('.chatmessage').onkeyup = () => {
+            if (document.querySelector('.chatmessage').value.length > 0 && isNotSpace(document.querySelector('.chatmessage').value))
+                document.querySelector('.chatbutton').disabled = false;
+            else
+                document.querySelector('.chatbutton').disabled = true;
+          }
 
         add_channels();
         goToChannel();
     });
-}
+  }
 
+// If last visited channel not in local storage
 else {
+    // Fetch username from local storage
+    username = localStorage.getItem('username');
+
+    // Load the DOM
     document.addEventListener('DOMContentLoaded', () => {
-      goToChannel();
+
+        // Set up the web socket
+        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+
+        document.querySelector('#firstpage').remove();
+
+        // Generate welcome page
+        document.querySelector('#welcome').innerHTML = `<h1>Choose a channel to start</h1>`;
+        document.querySelector('#chat').hidden = true;
+        const template = Handlebars.compile(document.querySelector('#handleuser').innerHTML);
+        const content = template({'username': username});
+        document.querySelector('#userdiv').innerHTML += content;
+
+
+        // By default, post button is disabled
+        document.querySelector('.chatbutton').disabled = true;
+
+        // Enable button only if there is text in the input field
+        document.querySelector('.chatmessage').onkeyup = () => {
+            if (document.querySelector('.chatmessage').value.length > 0 && isNotSpace(document.querySelector('.chatmessage').value))
+                document.querySelector('.chatbutton').disabled = false;
+            else
+                document.querySelector('.chatbutton').disabled = true;
+          }
+
+        add_channels();
+        goToChannel();
+      });
+    }
+  }
+
+// If user visiting for the first time
+else {
+      document.addEventListener('DOMContentLoaded', () => {
+
       // By default, submit form for creating new channels is hidden
       document.querySelector('#channeldiv').hidden = true;
 
@@ -30,21 +101,30 @@ else {
               document.querySelector('#namebutton').disabled = true;
         }
 
+        // When username form is submitted, create a new request
         document.querySelector('#nameform').onsubmit = () => {
             const request = new XMLHttpRequest();
-            var username = document.querySelector('#username').value;
+            username = document.querySelector('#username').value;
             request.open('POST', '/add_user');
 
             request.onload = () => {
                 const data = JSON.parse(request.responseText);
+
+                // If username was succesfully assigned
                 if (data.success) {
                   localStorage.setItem('username', username);
                   document.querySelector('#channeldiv').hidden = false;
                   document.querySelector('#firstpage').remove();
-                  document.querySelector('#welcome').innerHTML = `<h1>Hello, ${username}!<br></h1><h2>Choose a channel to start.</h2>`;
-                  goToChannel();
+                  document.querySelector('#welcome').innerHTML = `<h1>Choose a channel to start</h1>`;
+                  document.querySelector('#chat').hidden = true;
+
+                  const template = Handlebars.compile(document.querySelector('#handleuser').innerHTML);
+                  const content = template({'username': username});
+                  document.querySelector('#userdiv').innerHTML += content;
+
                 }
 
+                // If username already existed
                 else {
                     document.querySelector('#please').innerHTML = `Username ${username} is taken.<br> Pick a different one:`;
                     document.querySelector('#username').value = "";
@@ -54,18 +134,14 @@ else {
             data.append('username', username);
             request.send(data);
             return false;
-            goToChannel();
         };
 
-        // Enable adding channels
         add_channels();
-
         goToChannel();
     });
 }
 
-goToChannel();
-// Add channels
+// Add channels function
 function add_channels()
 {
       document.querySelector('#channelbutton').disabled = true;
@@ -97,82 +173,135 @@ function add_channels()
                   }
                   });
                   if (listed == false){
-                    document.querySelector('#message').innerHTML = 'Created successfully!';
                     document.querySelector('#newchannel').value = '';
                     socket.emit('add channel', {'selection': channel});
+                    document.querySelector('#message').innerHTML = 'Created successfully!';
+
                   }
                   else {
-                  document.querySelector('#message').innerHTML = 'Already exists!';
                   document.querySelector('#newchannel').value = '';
+                  document.querySelector('#message').innerHTML = 'Already exists!';
+
                   }
                 }
 
               request.send();
               return false;
             }
-          });
+
+        });
 
         socket.on('display channel', data => {
-        const h4 = document.createElement('h4');
-        h4.innerHTML = `<a href="" class="channel" data-channel="${data.selection}">${data.selection}</a>`;
+        var h4 = document.createElement('h4');
+        h4.innerHTML = `<a href="" class="channel" data-channel="${data.selection}"># ${data.selection}</a>`;
         document.querySelector('#channels').append(h4);
-        const div = document.createElement('div');
-        div.hidden = true;
-        div.innerHTML = `<form class="form-group form-inline"> <input autocomplete="off" autofocus class="form-control" name="${data.selection}" placeholder="What's on your mind?" type="text"><button class="btn btns chatbutton" type="submit" value="Create">Post</button>`
-        document.querySelector('#channels').append(div);
         goToChannel();
+
       });
-      goToChannel();
 }
 
-// Go to channel
+// This block handles adding posts
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Set up a web socket
+    var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+
+    socket.on('connect', () => {
+
+      // Submit posts on enter
+      document.querySelector('.chatmessage').addEventListener("keyup", function(event) {
+
+        // If the key was enter
+        if (event.keyCode === 13) {
+
+          // Cancel the default action, if needed
+          event.preventDefault();
+
+          // Trigger the chat button
+          document.querySelector('.chatbutton').click();
+        }
+      });
+
+    // Emit channel, username and message
+    document.querySelector('.chatbutton').onclick = () => {
+        const selection = [`${current_channel}`, `${username}`, document.querySelector('.chatmessage').value];
+        socket.emit('add post', {'selection': selection});
+
+        // Clear post field and disable button
+        document.querySelector('.chatmessage').value = '';
+        document.querySelector('.chatbutton').disabled = true;
+        document.querySelector('.chatmessage').onkeyup = () => {
+            if (document.querySelector('.chatmessage').value.length > 0 && isNotSpace(document.querySelector('.chatmessage').value))
+                document.querySelector('.chatbutton').disabled = false;
+            else
+                document.querySelector('.chatbutton').disabled = true;
+          }
+        }
+    });
+
+    // Change div with posts - append a new message
+    socket.on('display post', data => {
+          const template = Handlebars.compile(document.querySelector('#handleposts').innerHTML);
+          const content = template({'username': data.selection[0], 'message': data.selection[1], 'time':  data.selection[2]});
+
+          // Make sure the channel is right
+          if (document.querySelector('.chatmessage').name == data.selection[3]){
+              document.querySelector('#posts').innerHTML += content;
+          }
+
+          // Scroll down to the message
+          if (username == data.selection[0]){
+          document.querySelector('#posts').scrollTop = document.querySelector('#posts').scrollHeight;
+          }
+    });
+});
+
+// Go to channel function
 function goToChannel()
 {
-    // Set links up to load new pages.
+    // Set links up to load new pages
     document.querySelectorAll('.channel').forEach(link => {
       link.onclick = () => {
           load_page(link.dataset.channel);
+          current_channel = link.dataset.channel;
+          localStorage.setItem('channel', current_channel);
           return false;
           };
       });
 
-
-    // Renders contents of new page in main view.
-    function load_page(name) {
-          const request = new XMLHttpRequest();
-          request.open('GET', `/${name}`);
-          request.onload = () => {
-              const response = request.responseText;
-              text1 = `<h1>${response} Channel</h1>`;
-              text2 = `<form class="form-group form-inline"> <textarea autocomplete="off" autofocus class="form-control" name="${response}" placeholder="What's on your mind?" rows="3" type="text"></textarea><button class="btn btns chatbutton" type="submit" value="Create">Post</button></form>`;
-              document.querySelector('#chatroom').innerHTML = text1;
-              document.querySelector('#chat').innerHTML = text2;
-
-              // Push state to URL.
-              document.title = name;
-              history.pushState({'title': name,'text1': text1, 'text2': text2}, name, name);
-      };
-      request.send();
-  }
-
-  // Update window on popping state.
+  // Update window on popping state
   window.onpopstate = e => {
       const data = e.state;
       if (data == null)
       {
         username = localStorage.getItem('username');
         document.title = 'Flack';
-        document.querySelector('#chatroom').innerHTML = `<h1>Hello, ${username}!<br></h1>`;
-        document.querySelector('#chat').innerHTML = '<h2>Choose a channel to start.</h2>';
+        document.querySelector('#chatroom').innerHTML = `<h1>Choose a channel to start</h1>`;
+        document.querySelector('#chat').hidden = true;
+        document.querySelector('#posts').hidden = true;
+        localStorage.removeItem('channel');
       }
       else {
         document.title = data.title;
         document.querySelector('#chatroom').innerHTML = data.text1;
-        document.querySelector('#chat').innerHTML = data.text2;
-      }
+        document.querySelector('.chatmessage').name = data.text2;
+        document.querySelector('#posts').name = current_channel;
+        document.querySelector('#chat').hidden = false;
+        document.querySelector('#posts').hidden = false;
+        document.querySelector('#posts').innerHTML = '';
 
+        const template = Handlebars.compile(document.querySelector('#handleposts').innerHTML);
+
+        for (i = 0;  i < data.posts.length; i++) {
+          const content = template({'username': data.posts[i][0], 'message': data.posts[i][1], 'time':  data.posts[i][2]});
+          document.querySelector('#posts').innerHTML += content;
+        }
+        document.querySelector('#posts').scrollTop = document.querySelector('#posts').scrollHeight;
+
+      }
   };
 }
+
 
 
 // Check if input is alphanumeric with spaces
@@ -202,3 +331,90 @@ function isNotSpace(input)
         return true;
     }
 }
+
+// Renders contents of new page in main view
+function load_page(name) {
+      const request = new XMLHttpRequest();
+      request.open('GET', `/${name}`);
+      request.onload = () => {
+          const data = JSON.parse(request.responseText);
+          text1 = `<h1>#${data.channel}</h1>`;
+          text2 = data.channel;
+
+          document.querySelector('#chatroom').innerHTML = text1;
+          document.querySelector('.chatmessage').name = text2;
+          document.querySelector('#chat').hidden = false;
+          document.querySelector('#posts').hidden = false;
+          document.querySelector('#posts').innerHTML = '';
+          document.querySelector('#posts').name = current_channel;
+          document.querySelector('.chatbutton').disabled = true;
+          document.querySelector('.chatmessage').onkeyup = () => {
+              if (document.querySelector('.chatmessage').value.length > 0 && isNotSpace(document.querySelector('.chatmessage').value))
+                  document.querySelector('.chatbutton').disabled = false;
+              else
+                  document.querySelector('.chatbutton').disabled = true;
+            }
+
+          const template = Handlebars.compile(document.querySelector('#handleposts').innerHTML);
+
+          for (i = 0;  i < data.posts.length; i++) {
+            const content = template({'username': data.posts[i][0], 'message': data.posts[i][1], 'time':  data.posts[i][2]});
+            document.querySelector('#posts').innerHTML += content;
+          }
+          document.querySelector('#posts').scrollTop = document.querySelector('#posts').scrollHeight;
+
+          if (document.querySelector("#userdiv").innerHTML === ''){
+            const template = Handlebars.compile(document.querySelector('#handleuser').innerHTML);
+            const content = template({'username': username});
+            document.querySelector('#userdiv').innerHTML += content;
+          }
+
+          // Push state to URL.
+          document.title = name;
+          history.pushState({'title': name,'text1': text1, 'text2': text2, 'posts': data.posts}, name, name);
+        };
+
+  request.send();
+}
+
+// Handles deleting posts
+document.addEventListener('click', event => {
+      const element = event.target;
+      const div = element.closest('div');
+
+      // Allow deleting only if current user is the author
+      if (element.className == `btn hide ${username}`) {
+
+          // Assign values to hidden delete form
+          document.querySelector('.delete_post').value = div.querySelector("p").innerHTML;
+          document.querySelector('.delete_username').value = username;
+          document.querySelector('.delete_channel').value = current_channel;
+
+          const request = new XMLHttpRequest();
+          request.open('POST', '/delete');
+
+          request.onload = () => {
+          const data = JSON.parse(request.responseText);
+
+          if (data.success){
+
+            // Run CSS animation, and remove post when finished
+            element.parentElement.style.animationPlayState = 'running';
+            element.parentElement.addEventListener('animationend', () =>  {
+            element.parentElement.remove();
+            });
+          }
+
+          else {
+            alert('Something went wrong!');
+          }
+        }
+
+        const data = new FormData();
+        data.append('delete_username', username);
+        data.append('delete_post', div.querySelector("p").innerHTML)
+        data.append('delete_channel', current_channel)
+        request.send(data);
+        return false;
+    }
+});

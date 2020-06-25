@@ -7,28 +7,22 @@ a:hover {
 }
 
 button:hover {
-  background-color: #ffe6ee;
-  color: #b3003b;
-  border: 1px solid #ffe6ee;
+  opacity: 0.9;
 }
 
 button:disabled {
-  background-color: #334d4d;
-  color: white;
-  border: 1px solid #334d4d;
-}
-
-footer {
-  margin-top: 5%;
+  opacity: 0.5;
 }
 
 form {
   max-width: 100%;
+  width: 100%;
 }
 
 h1 {
-  text-align: center;
+  text-align: left;
   font-family: "Actor";
+  color: lightgrey;
   font-size: 5em;
   margin-top: 3%;
   margin-bottom: 4%;
@@ -37,6 +31,7 @@ h1 {
 h2 {
   text-align: center;
   font-family: "Actor";
+  color: #333333;
   font-size: 2.5em;
   margin-top: 3%;
   margin-bottom: 2%;
@@ -61,63 +56,29 @@ h4 {
 }
 
 h5 {
-  color: #ffe6ee;
   font-size: 1em;
   text-align: left;
-  margin-top: -0.5em;
-  margin-bottom: 2%;
 }
 
 input {
-  max-width: 70%;
-}
-
-label {
-  text-align: center;
-  font-size: 1.5em;
-  font-family: arial, sans-serif;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-p {
-  font-style: italic;
-}
-
-table {
-  width: 100%;
-  font-family: arial, sans-serif;
-  border-collapse: collapse;
-  margin-top: 1%;
-  margin-bottom: 5%;
-}
-
-td, tr, th {
-  border: 1px solid black;
-  padding: 10px;
-  text-align: left;
-}
-
-th {
-  background-color: #ffe6ee;
-}
-
-textarea {
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
   max-width: 100%;
 }
 
-#border-right {
-  border-right-width: 1px;
-  border-right-style: ridge;
-  border-right-color: lightgrey;
+#channelbutton {
+  background-color: grey;
+  color: white;
+  margin-left: 3%;
 }
 
 #channeldiv {
   min-height: 100vh;
+}
+
+#channels {
+  display: block;
+  max-height: 60vh;
+  width: 100%;
+  overflow: auto;
 }
 
 #firstpage {
@@ -127,6 +88,16 @@ textarea {
   margin-right: auto;
   margin-top: 5%;
   padding: 10px;
+  border-color: grey;
+}
+
+#input, .input-group {
+  width: 90%;
+  max-width: 90%;
+}
+
+#message {
+  color: white;
 }
 
 #nameform {
@@ -143,85 +114,76 @@ textarea {
   margin-top: 5%;
 }
 
-#reviews {
+#namebutton {
+  background-color: grey;
+  color: white;
+}
+
+#posts {
   display: block;
-  margin-left: auto;
-  margin-right: auto;
-  height: 40vw;
+  max-height: 60vh;
+  width: 90%;
   overflow: auto;
 }
 
-.btn {
-  background-color: #b3003b;
-  color: #ffe6ee;
-  border: 1px solid #b3003b;
+.attachmentbutton {
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
 }
 
-.btns {
-  background-color: #ff6699;
-  color: white;
-  border: 1px solid #b3003b;
-  margin-left: 5%;
-  max-width: 30%;
+.btn:disabled {
+  opacity: 0.5;
 }
 
-.card, img {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: 70%;
-  max-width: 70%;
-  margin-top: 2%;
-  margin-bottom: 1%;
+.card {
+  animation-name: hide;
+  animation-duration: 2s;
+  animation-fill-mode: forwards;
+  animation-play-state: paused;
 }
 
 .card-header {
   font-size: 1.3em;
-  font-weight: bolder;
 }
 
 .channelnav {
-  background-color: #b3003b;
+  background-color: #660022;
   min-height: 100vh;
 }
 
-.form-control {
-  max-width: 90%;
+.form-inline {
+  display: flex;
+  flex-flow: row wrap;
+  width: 90%;
+  vertical-align: middle;
 }
 
-.navbar {
-  background-color: #b3003b;
-  border: 10px solid #b3003b;
-  max-width: 100%;
-}
-
-.nav-item {
-  background-color: #b3003b;
-}
-
-.nav-link {
-  background-color: #b3003b;
+.handleuser {
   color: white;
+  padding-bottom: 10px;
 }
 
-.row, .col {
-  width: 100%;
+.hide {
+  background-color: white;
+  text-align: right;
+  border-bottom: 0.5px;
 }
 
-@media (max-width: 800px) {
-  form {
+@media (max-width: 1200px) {
+  form, #channelbutton, #channelform, #newchannel, .form-control, .form-group, .form-inline {
     max-width: 100%;
+    display: inherit;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   h1 {
-    font-family: arial, sans-serif;
     font-weight: bold;
     font-size: 2em;
     margin-top: 1%;
   }
 
   h3 {
-    font-family: arial, sans-serif;
     font-size: 1em;
     margin-top: 15%;
     text-align: center;
@@ -229,7 +191,6 @@ textarea {
 
   h4 {
     font-size: 0.8em;
-    font-family: arial, sans-serif;
     text-align: center;
   }
 
@@ -241,37 +202,43 @@ textarea {
     max-width: 100%;
   }
 
-  td, th {
-    padding: 3px;
-    font-size: 0.8em;
-  }
-
-  textarea {
-    max-width: 100%;
-  }
-
-  #border-right {
-    border-right-style: hidden;
-    border-bottom-width: 1px;
-    border-bottom-style: ridge;
-    border-bottom-color: lightgrey;
-  }
-
-  .btn {
-    max-width: 100%;
+  #channelbutton {
     margin-top: 5%;
   }
 
-  .hidden {
-    visibility: hidden;
-  }
-
-  .nav-item {
+  .card-header {
     font-size: 0.9em;
   }
 
   ::placeholder {
     font-size: 0.6em;
+  }
+}
+@keyframes hide {
+  0% {
+    opacity: 1;
+    height: 100%;
+    line-height: 100%;
+    width: 98%;
+    max-width: 98%;
+    margin-top: 2%;
+    margin-bottom: 2%;
+    border-bottom: 0.5px solid;
+    border-color: lightgrey;
+  }
+  95% {
+    opacity: 0;
+    height: 100%;
+    line-height: 100%;
+    width: 98%;
+    max-width: 98%;
+  }
+  100% {
+    opacity: 0;
+    height: 0px;
+    line-height: 0px;
+    width: 98%;
+    max-width: 98%;
   }
 }
 
